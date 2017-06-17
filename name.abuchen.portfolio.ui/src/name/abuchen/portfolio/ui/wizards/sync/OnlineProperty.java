@@ -54,8 +54,12 @@ public class OnlineProperty
     {
         if (!isModified())
         {
-            return suggestedValue != null && suggestedValue.equals(originalValue) ? OnlineState.State.SYNCED
-                            : OnlineState.State.CUSTOM;
+            if (suggestedValue != null && suggestedValue.equals(originalValue))
+                return OnlineState.State.SYNCED;
+            else if (originalState == OnlineState.State.EDITED)
+                return originalState;
+            else
+                return OnlineState.State.CUSTOM;
         }
         else
         {

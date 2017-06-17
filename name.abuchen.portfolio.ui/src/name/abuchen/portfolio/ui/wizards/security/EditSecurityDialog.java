@@ -31,6 +31,8 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
 import name.abuchen.portfolio.model.Client;
+import name.abuchen.portfolio.model.OnlineState;
+import name.abuchen.portfolio.model.OnlineState.Property;
 import name.abuchen.portfolio.model.Security;
 import name.abuchen.portfolio.ui.Images;
 import name.abuchen.portfolio.ui.Messages;
@@ -179,6 +181,7 @@ public class EditSecurityDialog extends Dialog
         {
             private AbstractPage current = null;
 
+            @Override
             public void widgetSelected(SelectionEvent e)
             {
                 if (current != null)
@@ -227,13 +230,9 @@ public class EditSecurityDialog extends Dialog
 
         // ask user what to do with existing quotes
         boolean hasQuotes = !security.getPrices().isEmpty();
-
-        boolean feedChanged = !Objects.equals(model.getFeed(), security.getFeed());
-        boolean tickerChanged = !Objects.equals(model.getTickerSymbol(), security.getTickerSymbol());
-        boolean feedURLChanged = !Objects.equals(model.getFeedURL(), security.getFeedURL());
-        boolean currencyChanged = !Objects.equals(model.getCurrencyCode(), security.getCurrencyCode());
-
-        boolean quotesCanChange = feedChanged || tickerChanged || feedURLChanged || currencyChanged;
+        boolean quotesCanChange = checkIfQuotesCanChange(security);
+        
+        updateOnlineState(security);
 
         model.applyChanges();
 
@@ -252,4 +251,35 @@ public class EditSecurityDialog extends Dialog
 
         super.okPressed();
     }
+    
+    private boolean checkIfQuotesCanChange(Security security)
+    {
+        boolean feedChanged = !Objects.equals(model.getFeed(), security.getFeed());
+        boolean tickerChanged = !Objects.equals(model.getTickerSymbol(), security.getTickerSymbol());
+        boolean feedURLChanged = !Objects.equals(model.getFeedURL(), security.getFeedURL());
+        boolean currencyChanged = !Objects.equals(model.getCurrencyCode(), security.getCurrencyCode());
+
+        return feedChanged || tickerChanged || feedURLChanged || currencyChanged;
+    }
+    
+    private void updateOnlineState(Security security)
+    {
+        if (security.getOnlineId() == null)
+            return;
+        
+        updateState(security, OnlineState.Property.NAME, model.getName(), security.getName());
+        updateState(security, OnlineState.Property.ISIN, model.getIsin(), security.getIsin());
+        updateState(security, OnlineState.Property.TICKER, model.getTickerSymbol(), security.getTickerSymbol());
+        updateState(security, OnlineState.Property.WKN, model.getWkn(), security.getWkn());
+    }
+
+    private void updateState(Security security, Property property, String oldValue, String newValue)
+    {
+        OnlineState.State currentState = security.getOnlineState().getState(property);
+        boolean isEdited = !Objects.equals(oldValue, newValue);
+        
+        if (isEdited && currentState == OnlineState.State.SYNCED)
+            security.getOnlineState().setState(property, OnlineState.State.EDITED);
+    }
+
 }
