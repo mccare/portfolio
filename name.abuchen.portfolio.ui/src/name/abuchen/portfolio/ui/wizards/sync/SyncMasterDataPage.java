@@ -1,6 +1,7 @@
 package name.abuchen.portfolio.ui.wizards.sync;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
@@ -123,9 +124,7 @@ public class SyncMasterDataPage extends AbstractWizardPage
         TableColumnLayout layout = new TableColumnLayout();
         container.setLayout(layout);
 
-        tableViewer = new TableViewer(container, SWT.FULL_SELECTION | SWT.SINGLE);
-        // ColumnViewerToolTipSupport.enableFor(tableViewer,
-        // ToolTip.NO_RECREATE);
+        tableViewer = new TableViewer(container, SWT.FULL_SELECTION | SWT.MULTI);
 
         ShowHideColumnHelper support = new ShowHideColumnHelper(SyncMasterDataPage.class.getSimpleName() + "@start2", // FIXME
                         preferences, tableViewer, layout);
@@ -152,30 +151,57 @@ public class SyncMasterDataPage extends AbstractWizardPage
 
     private void fillContextMenu(IMenuManager menuManager, OnlineState.Property property)
     {
-        SecurityDecorator security = (SecurityDecorator) tableViewer.getStructuredSelection().getFirstElement();
-        if (security == null)
+        if (tableViewer.getSelection().isEmpty())
             return;
-
-        OnlineProperty onlineProperty = security.getProperty(property);
 
         menuManager.add(new LabelOnly(property.getLabel()));
 
-        menuManager.add(new LabelOnly("Originalwert"));
-        SimpleAction action = new SimpleAction(onlineProperty.getOriginalValue(), a -> {
-            onlineProperty.setModified(false);
-            tableViewer.refresh(security);
-        });
-        action.setChecked(!onlineProperty.isModified());
-        menuManager.add(action);
+        boolean isMultiSelection = tableViewer.getStructuredSelection().size() > 1;
 
-        menuManager.add(new LabelOnly("Vorschlagswert"));
-        action = new SimpleAction(onlineProperty.getSuggestedValue(), a -> {
-            onlineProperty.setModified(true);
-            tableViewer.refresh(security);
-        });
-        action.setChecked(onlineProperty.isModified());
-        menuManager.add(action);
+        if (isMultiSelection)
+        {
+            @SuppressWarnings("unchecked")
+            List<SecurityDecorator> securities = new ArrayList<>(tableViewer.getStructuredSelection().toList());
 
+            menuManager.add(new SimpleAction("Alle annehmen", a -> {
+                securities.forEach(security -> {
+                    OnlineProperty onlineProperty = security.getProperty(property);
+                    if (onlineProperty.hasSuggestedValue())
+                        onlineProperty.setModified(true);
+                });
+                tableViewer.refresh();
+            }));
+
+            menuManager.add(new SimpleAction("Alle ablehnen", a -> {
+                securities.forEach(security -> {
+                    OnlineProperty onlineProperty = security.getProperty(property);
+                    onlineProperty.setModified(false);
+                });
+                tableViewer.refresh();
+            }));
+        }
+        else
+        {
+            SecurityDecorator security = (SecurityDecorator) tableViewer.getStructuredSelection().getFirstElement();
+            OnlineProperty onlineProperty = security.getProperty(property);
+
+            menuManager.add(new LabelOnly("Vorschlagswert"));
+            SimpleAction action = new SimpleAction(onlineProperty.getSuggestedValue(), a -> {
+                onlineProperty.setModified(true);
+                tableViewer.refresh(security);
+            });
+            action.setChecked(onlineProperty.isModified());
+            menuManager.add(action);
+
+            menuManager.add(new LabelOnly("Originalwert"));
+            action = new SimpleAction(onlineProperty.getOriginalValue(), a -> {
+                onlineProperty.setModified(false);
+                tableViewer.refresh(security);
+            });
+            action.setChecked(!onlineProperty.isModified());
+            menuManager.add(action);
+
+        }
     }
 
     private void runOnlineSync()

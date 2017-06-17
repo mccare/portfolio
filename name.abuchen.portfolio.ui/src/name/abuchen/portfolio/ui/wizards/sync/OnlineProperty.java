@@ -27,6 +27,11 @@ public class OnlineProperty
     {
         return suggestedValue;
     }
+    
+    public boolean hasSuggestedValue()
+    {
+        return suggestedValue != null && !suggestedValue.isEmpty();
+    }
 
     public void setSuggestedValue(String suggestedValue)
     {
