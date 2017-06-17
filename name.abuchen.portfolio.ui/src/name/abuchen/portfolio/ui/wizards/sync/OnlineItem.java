@@ -13,7 +13,7 @@ class OnlineItem
     public static OnlineItem from(JSONObject json)
     {
         OnlineItem vehicle = new OnlineItem();
-        vehicle.id = (String) json.get("id"); //$NON-NLS-1$
+        vehicle.id = (String) json.get("uuid"); //$NON-NLS-1$
         vehicle.name = (String) json.get("name"); //$NON-NLS-1$
         vehicle.isin = (String) json.get("isin"); //$NON-NLS-1$
         vehicle.wkn = (String) json.get("wkn"); //$NON-NLS-1$
