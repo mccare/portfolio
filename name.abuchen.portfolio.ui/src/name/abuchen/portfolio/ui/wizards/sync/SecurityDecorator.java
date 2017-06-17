@@ -5,7 +5,6 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
@@ -13,7 +12,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Scanner;
 
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
@@ -23,11 +21,12 @@ import name.abuchen.portfolio.model.OnlineState;
 import name.abuchen.portfolio.model.OnlineState.Property;
 import name.abuchen.portfolio.model.OnlineState.State;
 import name.abuchen.portfolio.model.Security;
+import name.abuchen.portfolio.online.sync.FabritiusSearchProvider;
+import name.abuchen.portfolio.online.sync.OnlineItem;
 import name.abuchen.portfolio.ui.PortfolioPlugin;
 
 public class SecurityDecorator implements Adaptable
 {
-    private static final String SEARCH_URL = "http://testapi.fabritius.org/securities/search/{0}"; //$NON-NLS-1$
     private static final String READ_URL = "http://testapi.fabritius.org/securities/{0}"; //$NON-NLS-1$
 
     private Security security;
@@ -143,25 +142,8 @@ public class SecurityDecorator implements Adaptable
 
         if (searchProperty == null || searchProperty.isEmpty())
             return Collections.emptyList();
-
-        String searchUrl = MessageFormat.format(SEARCH_URL,
-                        URLEncoder.encode(searchProperty, StandardCharsets.UTF_8.name()));
-
-        List<OnlineItem> answer = new ArrayList<>();
-
-        try (Scanner scanner = new Scanner(new URL(searchUrl).openStream(), StandardCharsets.UTF_8.name()))
-        {
-            String html = scanner.useDelimiter("\\A").next(); //$NON-NLS-1$
-
-            JSONArray response = (JSONArray) JSONValue.parse(html);
-            if (response != null)
-            {
-                for (int ii = 0; ii < response.size(); ii++)
-                    answer.add(OnlineItem.from((JSONObject) response.get(ii)));
-            }
-        }
-
-        return answer;
+        
+        return new FabritiusSearchProvider().runSearch(searchProperty);
     }
 
     /**

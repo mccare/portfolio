@@ -1,8 +1,10 @@
-package name.abuchen.portfolio.ui.wizards.sync;
+package name.abuchen.portfolio.online.sync;
 
 import org.json.simple.JSONObject;
 
-class OnlineItem
+import name.abuchen.portfolio.online.SecuritySearchProvider.ResultItem;
+
+public class OnlineItem
 {
     private String id;
     private String name;
@@ -44,5 +46,17 @@ class OnlineItem
     public String getTicker()
     {
         return ticker;
+    }
+
+    public ResultItem toResultItem()
+    {
+        ResultItem resultItem = new ResultItem();
+
+        resultItem.setName(name);
+        resultItem.setIsin(isin);
+        resultItem.setSymbol(ticker);
+        resultItem.setType("Wertpapier");
+
+        return resultItem;
     }
 }

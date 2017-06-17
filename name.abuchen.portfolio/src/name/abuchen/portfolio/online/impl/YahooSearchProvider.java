@@ -102,7 +102,7 @@ public class YahooSearchProvider implements SecuritySearchProvider
 
     private void addSymbolSearchResults(List<ResultItem> answer, String query) throws IOException
     {
-        Set<String> existingSymbols = answer.stream().map(r -> r.getSymbol()).collect(Collectors.toSet());
+        Set<String> existingSymbols = answer.stream().map(ResultItem::getSymbol).collect(Collectors.toSet());
 
         new YahooSymbolSearch().search(query)//
                         .filter(r -> !existingSymbols.contains(r.getSymbol()))
