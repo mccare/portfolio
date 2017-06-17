@@ -2,6 +2,7 @@ package name.abuchen.portfolio.model;
 
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.function.Function;
 
 import name.abuchen.portfolio.Messages;
 
@@ -9,21 +10,28 @@ public class OnlineState
 {
     public enum Property
     {
-        NAME(Messages.CSVColumn_SecurityName), //
-        ISIN(Messages.CSVColumn_ISIN), //
-        WKN(Messages.CSVColumn_WKN), //
-        TICKER(Messages.CSVColumn_TickerSymbol);
+        NAME(Messages.CSVColumn_SecurityName, Security::getName), //
+        ISIN(Messages.CSVColumn_ISIN, Security::getIsin), //
+        WKN(Messages.CSVColumn_WKN, Security::getWkn), //
+        TICKER(Messages.CSVColumn_TickerSymbol, Security::getTickerSymbol);
 
         private String label;
+        private Function<Security, String> securityReadMethod;
 
-        private Property(String label)
+        private Property(String label, Function<Security, String> securityReadMethod)
         {
             this.label = label;
+            this.securityReadMethod = securityReadMethod;
         }
 
         public String getLabel()
         {
             return label;
+        }
+        
+        public String getValue(Security security)
+        {
+            return securityReadMethod.apply(security);
         }
     }
 

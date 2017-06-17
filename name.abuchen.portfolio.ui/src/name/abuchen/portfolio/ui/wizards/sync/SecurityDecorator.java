@@ -1,13 +1,22 @@
 package name.abuchen.portfolio.ui.wizards.sync;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Scanner;
@@ -86,12 +95,66 @@ public class SecurityDecorator implements Adaptable
 
     private void updateSyncedItem() throws IOException
     {
+        sendEditedState();
+
         readOnline().ifPresent(onlineItem -> {
             properties.get(Property.NAME).setSuggestedValue(onlineItem.getName());
             properties.get(Property.ISIN).setSuggestedValue(onlineItem.getIsin());
             properties.get(Property.WKN).setSuggestedValue(onlineItem.getWkn());
             properties.get(Property.TICKER).setSuggestedValue(onlineItem.getTicker());
         });
+    }
+
+    private void sendEditedState()
+    {
+        JSONObject body = new JSONObject();
+
+        OnlineState state = security.getOnlineState();
+        for (Property p : OnlineState.Property.values())
+        {
+            State s = state.getState(p);
+            if (s == OnlineState.State.CUSTOM || s == OnlineState.State.EDITED)
+            {
+                String value = p.getValue(security);
+
+                if (value != null)
+                    body.put(p.name().toLowerCase(Locale.US), value);
+            }
+        }
+
+        if (!body.isEmpty())
+        {
+            PortfolioPlugin.log("Sending updates for " + security.getName() + ": " + body.toJSONString());
+            
+            try
+            {
+                String url = MessageFormat.format(READ_URL, URLEncoder.encode(onlineId, StandardCharsets.UTF_8.name()));
+
+                URL obj = new URL(url);
+                HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+
+                // add request header
+                con.setDoOutput(true);
+                con.setRequestProperty("X-Source", "Portfolio Peformance "
+                                + PortfolioPlugin.getDefault().getBundle().getVersion().toString());
+                con.setRequestProperty("X-Reason", "periodic update");
+                con.setRequestProperty("Content-Type", "application/json;chartset=UTF-8");
+
+                try (OutputStream output = con.getOutputStream())
+                {
+                    output.write(body.toJSONString().getBytes(StandardCharsets.UTF_8));
+                }
+
+                int responseCode = con.getResponseCode();
+                if (responseCode != HttpURLConnection.HTTP_OK)
+                    PortfolioPlugin.log(url + " returns " + responseCode);
+            }
+            catch (IOException e)
+            {
+                PortfolioPlugin.log(e);
+            }
+
+        }
     }
 
     private Optional<OnlineItem> readOnline() throws IOException
@@ -142,7 +205,7 @@ public class SecurityDecorator implements Adaptable
 
         if (searchProperty == null || searchProperty.isEmpty())
             return Collections.emptyList();
-        
+
         return new FabritiusSearchProvider().runSearch(searchProperty);
     }
 
