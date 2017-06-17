@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+import name.abuchen.portfolio.model.OnlineState.Property;
 import name.abuchen.portfolio.money.CurrencyUnit;
 
 public final class Security implements Attributable, InvestmentVehicle
@@ -134,6 +135,9 @@ public final class Security implements Attributable, InvestmentVehicle
     @Override
     public void setName(String name)
     {
+        if (!Objects.equals(this.name, name) && getOnlineState().getState(Property.NAME) == OnlineState.State.SYNCED)
+            getOnlineState().setState(Property.NAME, OnlineState.State.EDITED);
+
         this.name = name;
     }
 
@@ -168,6 +172,9 @@ public final class Security implements Attributable, InvestmentVehicle
 
     public void setIsin(String isin)
     {
+        if (!Objects.equals(this.isin, isin) && getOnlineState().getState(Property.ISIN) == OnlineState.State.SYNCED)
+            getOnlineState().setState(Property.ISIN, OnlineState.State.EDITED);
+
         this.isin = isin;
     }
 
@@ -178,6 +185,9 @@ public final class Security implements Attributable, InvestmentVehicle
 
     public void setTickerSymbol(String tickerSymbol)
     {
+        if (!Objects.equals(this.tickerSymbol, tickerSymbol) && getOnlineState().getState(Property.TICKER) == OnlineState.State.SYNCED)
+            getOnlineState().setState(Property.TICKER, OnlineState.State.EDITED);
+
         this.tickerSymbol = tickerSymbol;
     }
 
@@ -188,6 +198,9 @@ public final class Security implements Attributable, InvestmentVehicle
 
     public void setWkn(String wkn)
     {
+        if (!Objects.equals(this.wkn, wkn) && getOnlineState().getState(Property.WKN) == OnlineState.State.SYNCED)
+            getOnlineState().setState(Property.WKN, OnlineState.State.EDITED);
+
         this.wkn = wkn;
     }
 

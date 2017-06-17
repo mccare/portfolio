@@ -39,7 +39,7 @@ public class PasswordDialog extends AbstractDialog
         }
 
         @Override
-        public void applyChanges()
+        public void applyChanges() // NOSONAR
         {}
     }
 
@@ -51,10 +51,12 @@ public class PasswordDialog extends AbstractDialog
     @Override
     protected void createFormElements(Composite editArea)
     {
-        final IObservableValue password = bindings().bindStringInput(editArea, Messages.LabelPassword,
-                        "password", SWT.PASSWORD); //$NON-NLS-1$
-        final IObservableValue repeat = bindings().bindStringInput(editArea, Messages.LabelPasswordRepeat,
-                        "repeat", SWT.PASSWORD); //$NON-NLS-1$
+        final IObservableValue<?> password = bindings()
+                        .bindStringInput(editArea, Messages.LabelPassword, "password", SWT.PASSWORD) //$NON-NLS-1$
+                        .getObservableValue();
+        final IObservableValue<?> repeat = bindings()
+                        .bindStringInput(editArea, Messages.LabelPasswordRepeat, "repeat", SWT.PASSWORD) //$NON-NLS-1$
+                        .getObservableValue();
 
         // multi validator (passwords must be identical)
         MultiValidator validator = new MultiValidator()
@@ -69,8 +71,8 @@ public class PasswordDialog extends AbstractDialog
                 if (pwd.length() < 6)
                     return ValidationStatus.error(Messages.MsgPasswordMinCharacters);
 
-                return pwd.equals(rpt) ? ValidationStatus.ok() : ValidationStatus
-                                .error(Messages.MsgPasswordNotIdentical);
+                return pwd.equals(rpt) ? ValidationStatus.ok()
+                                : ValidationStatus.error(Messages.MsgPasswordNotIdentical);
             }
 
         };

@@ -28,7 +28,7 @@ public final class Colors
 
     public static final Color DARK_BLUE = getColor(149, 165, 180); // 95A5B4
 
-    public static final Color HEADINGS = getColor(57, 62, 66); // 95A5B4
+    public static final Color HEADINGS = getColor(57, 62, 66);
     public static final Color OTHER_CATEGORY = getColor(180, 180, 180);
     public static final Color INFO_TOOLTIP_BACKGROUND = getColor(236, 235, 236);
 

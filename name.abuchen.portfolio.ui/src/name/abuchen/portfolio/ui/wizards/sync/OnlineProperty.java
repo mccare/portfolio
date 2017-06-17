@@ -48,6 +48,10 @@ public class OnlineProperty
         // accept new value if no sync decision was made
         else if (originalState == OnlineState.State.BLANK)
             isModified = true;
+        
+        // accept new value if online state is SYNCED
+        else if (originalState == OnlineState.State.SYNCED)
+            isModified = true;
     }
 
     public State getSuggestedState()

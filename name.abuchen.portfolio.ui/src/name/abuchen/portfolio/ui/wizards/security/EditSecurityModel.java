@@ -4,12 +4,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import name.abuchen.portfolio.model.AttributeType;
 import name.abuchen.portfolio.model.Attributes;
 import name.abuchen.portfolio.model.Classification;
 import name.abuchen.portfolio.model.Classification.Assignment;
 import name.abuchen.portfolio.model.Client;
+import name.abuchen.portfolio.model.OnlineState;
 import name.abuchen.portfolio.model.Security;
 import name.abuchen.portfolio.model.Taxonomy;
 import name.abuchen.portfolio.model.Taxonomy.Visitor;
@@ -23,7 +25,7 @@ import name.abuchen.portfolio.ui.util.BindingHelper;
         private Security security;
         private List<Classification> elements;
 
-        private List<ClassificationLink> links = new ArrayList<ClassificationLink>();
+        private List<ClassificationLink> links = new ArrayList<>();
 
         public TaxonomyDesignation(Taxonomy taxonomy, final Security security)
         {
@@ -60,7 +62,7 @@ import name.abuchen.portfolio.ui.util.BindingHelper;
         @Override
         public void applyChanges()
         {
-            final Map<Classification, ClassificationLink> classification2link = new HashMap<Classification, ClassificationLink>();
+            final Map<Classification, ClassificationLink> classification2link = new HashMap<>();
             for (ClassificationLink link : links)
                 classification2link.put(link.getClassification(), link);
 
@@ -169,6 +171,9 @@ import name.abuchen.portfolio.ui.util.BindingHelper;
 
     private Security security;
 
+    private String onlineId;
+    private OnlineState onlineState;
+
     private String name;
     private String currencyCode;
     private String note;
@@ -197,6 +202,9 @@ import name.abuchen.portfolio.ui.util.BindingHelper;
 
         this.security = security;
 
+        this.onlineId = security.getOnlineId();
+        this.onlineState = new OnlineState(security.getOnlineState());
+
         this.name = security.getName();
         this.currencyCode = security.getCurrencyCode();
         this.note = security.getNote();
@@ -223,12 +231,62 @@ import name.abuchen.portfolio.ui.util.BindingHelper;
                         });
     }
 
+    public String getOnlineId()
+    {
+        return onlineId;
+    }
+
+    public void setOnlineId(String onlineId)
+    {
+        firePropertyChange("onlineId", this.onlineId, this.onlineId = onlineId); //$NON-NLS-1$
+    }
+
+    public OnlineState getOnlineState()
+    {
+        return onlineState;
+    }
+
+    public String getOnlineStateString()
+    {
+
+        return onlineState.toString();
+    }
+
+    public void setOnlineStateString(String s)
+    {
+        // nothing to do
+    }
+
+    public void triggerOnlineStateChange()
+    {
+        firePropertyChange("onlineStateString", "", getOnlineStateString()); //$NON-NLS-1$
+    }
+
     public String getName()
     {
         return name;
     }
 
+    /**
+     * Sets the name and triggers online state transition as the user has
+     * modified the name.
+     */
     public void setName(String name)
+    {
+        String oldValue = this.name;
+        this.name = name;
+
+        if (!Objects.equals(oldValue, name))
+            onlineState.modifiedByUser(OnlineState.Property.NAME);
+
+        firePropertyChange("name", oldValue, name); //$NON-NLS-1$
+        triggerOnlineStateChange();
+    }
+
+    /**
+     * Sets name without triggering online state transition.
+     */
+    public void syncName(String name)
     {
         firePropertyChange("name", this.name, this.name = name); //$NON-NLS-1$
     }
@@ -258,7 +316,26 @@ import name.abuchen.portfolio.ui.util.BindingHelper;
         return isin;
     }
 
+    /**
+     * Sets the ISIN and triggers online state transition as the user has
+     * modified the ISIN.
+     */
     public void setIsin(String isin)
+    {
+        String oldValue = this.isin;
+        this.isin = isin;
+
+        if (!Objects.equals(oldValue, isin))
+            onlineState.modifiedByUser(OnlineState.Property.ISIN);
+
+        firePropertyChange("isin", oldValue, this.isin); //$NON-NLS-1$
+        triggerOnlineStateChange();
+    }
+
+    /**
+     * Sets ISIN without triggering online state transition.
+     */
+    public void syncIsin(String isin)
     {
         firePropertyChange("isin", this.isin, this.isin = isin); //$NON-NLS-1$
     }
@@ -268,7 +345,26 @@ import name.abuchen.portfolio.ui.util.BindingHelper;
         return tickerSymbol;
     }
 
+    /**
+     * Sets the ticker symbol and triggers online state transition as the user
+     * has modified the ticker symbol.
+     */
     public void setTickerSymbol(String tickerSymbol)
+    {
+        String oldValue = this.tickerSymbol;
+        this.tickerSymbol = tickerSymbol;
+
+        if (!Objects.equals(oldValue, tickerSymbol))
+            onlineState.modifiedByUser(OnlineState.Property.TICKER);
+
+        firePropertyChange("tickerSymbol", oldValue, tickerSymbol); //$NON-NLS-1$
+        triggerOnlineStateChange();
+    }
+
+    /**
+     * Sets ticker symbol without triggering online state transition.
+     */
+    public void syncTickerSymbol(String tickerSymbol)
     {
         firePropertyChange("tickerSymbol", this.tickerSymbol, this.tickerSymbol = tickerSymbol); //$NON-NLS-1$
     }
@@ -278,7 +374,26 @@ import name.abuchen.portfolio.ui.util.BindingHelper;
         return wkn;
     }
 
+    /**
+     * Sets the WKN and triggers online state transition as the user has
+     * modified the WKN.
+     */
     public void setWkn(String wkn)
+    {
+        String oldValue = this.wkn;
+        this.wkn = wkn;
+
+        if (!Objects.equals(oldValue, wkn))
+            onlineState.modifiedByUser(OnlineState.Property.WKN);
+
+        firePropertyChange("wkn", oldValue, wkn); //$NON-NLS-1$
+        triggerOnlineStateChange();
+    }
+
+    /**
+     * Sets WKN without triggering online state transition.
+     */
+    public void syncWkn(String wkn)
     {
         firePropertyChange("wkn", this.wkn, this.wkn = wkn); //$NON-NLS-1$
     }
@@ -388,6 +503,8 @@ import name.abuchen.portfolio.ui.util.BindingHelper;
      */
     public void setAttributes(Security security)
     {
+        security.setOnlineId(onlineId);
+
         security.setName(name);
         security.setCurrencyCode(currencyCode);
         security.setNote(note);
@@ -399,6 +516,10 @@ import name.abuchen.portfolio.ui.util.BindingHelper;
         security.setLatestFeed(latestFeed);
         security.setLatestFeedURL(latestFeedURL);
         security.setRetired(isRetired);
+
+        // update online state *after* calling setter because setters also
+        // update the online state
+        security.getOnlineState().setAll(onlineState);
 
         Attributes a = new Attributes();
         for (AttributeDesignation attribute : attributes)

@@ -133,23 +133,29 @@ public class SearchSecurityWizardPage extends WizardPage
 
                 progressMonitor.beginTask(Messages.SecurityMenuSearchYahoo, providers.size());
 
-                try
-                {
-                    List<ResultItem> result = new ArrayList<>();
+                List<ResultItem> result = new ArrayList<>();
+                List<String> errors = new ArrayList<>();
 
-                    for (SecuritySearchProvider provider : providers)
+                for (SecuritySearchProvider provider : providers)
+                {
+                    try
                     {
                         result.addAll(provider.search(query));
-                        progressMonitor.worked(1);
                     }
+                    catch (IOException e)
+                    {
+                        PortfolioPlugin.log(e);
+                        errors.add(provider.getName() + ": " + e.getMessage()); //$NON-NLS-1$
+                    }
+                    progressMonitor.worked(1);
+                }
 
-                    Display.getDefault().asyncExec(() -> resultTable.setInput(result));
-                }
-                catch (IOException e)
-                {
-                    PortfolioPlugin.log(e);
-                    Display.getDefault().asyncExec(() -> setErrorMessage(e.getMessage()));
-                }
+                Display.getDefault().asyncExec(() -> {
+                    resultTable.setInput(result);
+
+                    if (!errors.isEmpty())
+                        setErrorMessage(String.join(", ", errors)); //$NON-NLS-1$
+                });
             });
         }
         catch (InvocationTargetException | InterruptedException e)

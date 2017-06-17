@@ -31,8 +31,6 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
 import name.abuchen.portfolio.model.Client;
-import name.abuchen.portfolio.model.OnlineState;
-import name.abuchen.portfolio.model.OnlineState.Property;
 import name.abuchen.portfolio.model.Security;
 import name.abuchen.portfolio.ui.Images;
 import name.abuchen.portfolio.ui.Messages;
@@ -231,8 +229,6 @@ public class EditSecurityDialog extends Dialog
         // ask user what to do with existing quotes
         boolean hasQuotes = !security.getPrices().isEmpty();
         boolean quotesCanChange = checkIfQuotesCanChange(security);
-        
-        updateOnlineState(security);
 
         model.applyChanges();
 
@@ -245,13 +241,13 @@ public class EditSecurityDialog extends Dialog
                             new String[] { Messages.MessageDialogProviderAnswerKeep,
                                             Messages.MessageDialogProviderAnswerReplace },
                             0);
-            if (dialog.open() == 1)
+            if (dialog.open() == 1) // index of replace button
                 security.removeAllPrices();
         }
 
         super.okPressed();
     }
-    
+
     private boolean checkIfQuotesCanChange(Security security)
     {
         boolean feedChanged = !Objects.equals(model.getFeed(), security.getFeed());
@@ -261,25 +257,4 @@ public class EditSecurityDialog extends Dialog
 
         return feedChanged || tickerChanged || feedURLChanged || currencyChanged;
     }
-    
-    private void updateOnlineState(Security security)
-    {
-        if (security.getOnlineId() == null)
-            return;
-        
-        updateState(security, OnlineState.Property.NAME, model.getName(), security.getName());
-        updateState(security, OnlineState.Property.ISIN, model.getIsin(), security.getIsin());
-        updateState(security, OnlineState.Property.TICKER, model.getTickerSymbol(), security.getTickerSymbol());
-        updateState(security, OnlineState.Property.WKN, model.getWkn(), security.getWkn());
-    }
-
-    private void updateState(Security security, Property property, String oldValue, String newValue)
-    {
-        OnlineState.State currentState = security.getOnlineState().getState(property);
-        boolean isEdited = !Objects.equals(oldValue, newValue);
-        
-        if (isEdited && currentState == OnlineState.State.SYNCED)
-            security.getOnlineState().setState(property, OnlineState.State.EDITED);
-    }
-
 }

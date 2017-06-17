@@ -2,6 +2,7 @@ package name.abuchen.portfolio.model;
 
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 import name.abuchen.portfolio.Messages;
@@ -28,7 +29,7 @@ public class OnlineState
         {
             return label;
         }
-        
+
         public String getValue(Security security)
         {
             return securityReadMethod.apply(security);
@@ -42,6 +43,15 @@ public class OnlineState
 
     private Map<Property, State> state = new EnumMap<>(Property.class);
 
+    public OnlineState()
+    {}
+
+    public OnlineState(OnlineState template)
+    {
+        Objects.requireNonNull(template);
+        this.state.putAll(template.state);
+    }
+
     public State getState(Property property)
     {
         State answer = state.get(property);
@@ -51,5 +61,35 @@ public class OnlineState
     public State setState(Property property, State state)
     {
         return this.state.put(property, state);
+    }
+
+    public void modifiedByUser(Property property)
+    {
+        State answer = getState(property);
+
+        switch (answer)
+        {
+            case BLANK:
+            case EDITED:
+            case CUSTOM:
+                break;
+            case SYNCED:
+                setState(property, State.EDITED);
+                break;
+            default:
+                throw new IllegalArgumentException();
+        }
+    }
+
+    @Override
+    public String toString()
+    {
+        return state.toString();
+    }
+
+    public void setAll(OnlineState other)
+    {
+        this.state.clear();
+        this.state.putAll(other.state);
     }
 }

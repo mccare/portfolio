@@ -3,9 +3,6 @@ package name.abuchen.portfolio.ui.util;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import org.eclipse.core.databinding.AggregateValidationStatus;
 import org.eclipse.core.databinding.DataBindingContext;
@@ -24,7 +21,6 @@ import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.ComboViewer;
 import org.eclipse.jface.viewers.IBaseLabelProvider;
-import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.FocusAdapter;
 import org.eclipse.swt.events.FocusEvent;
@@ -45,7 +41,7 @@ import name.abuchen.portfolio.util.Isin;
 
 public class BindingHelper
 {
-    private static final class StringToCurrencyUnitConverter implements IConverter
+    public static final class StringToCurrencyUnitConverter implements IConverter
     {
         @Override
         public Object getToType()
@@ -66,7 +62,7 @@ public class BindingHelper
         }
     }
 
-    private static final class CurrencyUnitToStringConverter implements IConverter
+    public static final class CurrencyUnitToStringConverter implements IConverter
     {
         @Override
         public Object getToType()
@@ -132,6 +128,28 @@ public class BindingHelper
         }
 
         public abstract void applyChanges();
+    }
+
+    public static class InputField
+    {
+        private Control control;
+        private IObservableValue<?> observableValue;
+
+        public InputField(Control control, IObservableValue<?> observableValue)
+        {
+            this.control = control;
+            this.observableValue = observableValue;
+        }
+
+        public Control getControl()
+        {
+            return control;
+        }
+
+        public IObservableValue<?> getObservableValue()
+        {
+            return observableValue;
+        }
     }
 
     private static final class StatusTextConverter implements IConverter
@@ -262,31 +280,6 @@ public class BindingHelper
         return combo;
     }
 
-    public final ComboViewer bindCurrencyCodeCombo(Composite editArea, String label, String property)
-    {
-        Label l = new Label(editArea, SWT.NONE);
-        l.setText(label);
-        ComboViewer combo = new ComboViewer(editArea, SWT.READ_ONLY);
-        combo.setContentProvider(ArrayContentProvider.getInstance());
-        combo.setLabelProvider(new LabelProvider());
-
-        List<CurrencyUnit> currencies = new ArrayList<>();
-        currencies.add(CurrencyUnit.EMPTY);
-        currencies.addAll(CurrencyUnit.getAvailableCurrencyUnits().stream().sorted().collect(Collectors.toList()));
-        combo.setInput(currencies);
-        GridDataFactory.fillDefaults().align(SWT.BEGINNING, SWT.FILL).applyTo(combo.getControl());
-
-        UpdateValueStrategy targetToModel = new UpdateValueStrategy();
-        targetToModel.setConverter(new CurrencyUnitToStringConverter());
-
-        UpdateValueStrategy modelToTarget = new UpdateValueStrategy();
-        modelToTarget.setConverter(new StringToCurrencyUnitConverter());
-
-        context.bindValue(ViewersObservables.observeSingleSelection(combo), //
-                        BeanProperties.value(property).observe(model), targetToModel, modelToTarget);
-        return combo;
-    }
-
     public final void bindDatePicker(Composite editArea, String label, String property)
     {
         Label l = new Label(editArea, SWT.NONE);
@@ -383,17 +376,17 @@ public class BindingHelper
         return txtValue;
     }
 
-    public final IObservableValue bindStringInput(Composite editArea, final String label, String property)
+    public final InputField bindStringInput(Composite editArea, final String label, String property)
     {
         return bindStringInput(editArea, label, property, SWT.NONE, SWT.DEFAULT);
     }
 
-    public final IObservableValue bindStringInput(Composite editArea, final String label, String property, int style)
+    public final InputField bindStringInput(Composite editArea, final String label, String property, int style)
     {
         return bindStringInput(editArea, label, property, style, SWT.DEFAULT);
     }
 
-    public final IObservableValue bindStringInput(Composite editArea, final String label, String property, int style,
+    public final InputField bindStringInput(Composite editArea, final String label, String property, int style,
                     int lenghtInCharacters)
     {
         Text txtValue = createTextInput(editArea, label, style, lenghtInCharacters);
@@ -401,7 +394,7 @@ public class BindingHelper
         ISWTObservableValue observeText = WidgetProperties.text(SWT.Modify).observe(txtValue);
         context.bindValue(observeText, BeanProperties.value(property).observe(model));
 
-        return observeText;
+        return new InputField(txtValue, observeText);
     }
 
     public final Control bindMandatoryStringInput(Composite editArea, final String label, String property)
